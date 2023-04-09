@@ -1,3 +1,5 @@
+from functools import reduce
+
 class Perceptron(object):
     def __init__(self,input_num,activator):
         self.activator = activator
@@ -6,14 +8,14 @@ class Perceptron(object):
         self.bias = 0.0
 
     def __str__(self):
-        return 'weights\t:%s\nbias\t:%f\n' % (self.weights,self.bias)
+        return 'weights\t:%s\nbias\t:%f\n' % (list(self.weights) ,self.bias)
 
     def predict(self,input_vec):
         return self.activator(
-            lambda a,b:a+b,
-            map(lambda (x,w):x*w,
-                zip(input_vec,self.weights)
-            ,0.0) + self.bias)
+            reduce(lambda a, b: a + b,
+                   map(lambda xw: xw[0] * xw[1],
+                       zip(input_vec, self.weights))
+                   , 0.0) + self.bias)
 
 
     def train(self,input_vecs,labels,iteration,rate):
@@ -29,10 +31,10 @@ class Perceptron(object):
 
     def _update_weights(self, input_vec, output, label, rate):
         delta = label - output
-        self.weights = map(
-            lambda (x,w):w+rate*delta*x,
+        self.weights = list(map(
+            lambda xw:xw[1]+rate*delta*xw[0],
             zip(input_vec,self.weights)
-        )
+        ))
         self.bias += rate*delta
 
 def f(x):
