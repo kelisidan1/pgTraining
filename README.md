@@ -6,6 +6,7 @@
 (tip:图床用github搭建，所以加载有点慢~~)<br>
 
 <br>
-<br>
-# 我爱学习<br>
+
+# 我爱学习
+
 ![image-20230409201348766](https://raw.githubusercontent.com/kelisidan1/blogImg/main/img/image-20230409201348766.png)
