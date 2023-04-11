@@ -1,6 +1,6 @@
 # Layer 层对象，由多个节点组成。
-from day03.Node import Node
-from day03.ConstNode import ConstNode
+from Neural_networks_and_BP.Node import Node
+from Neural_networks_and_BP.ConstNode import ConstNode
 
 
 class Layer(object):

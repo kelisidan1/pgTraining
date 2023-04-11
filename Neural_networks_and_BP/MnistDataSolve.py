@@ -4,7 +4,7 @@ import struct
 from bp import *
 from datetime import datetime
 # 数据加载器基类
-from day03.fc import Network
+from Neural_networks_and_BP.fc import Network
 
 
 class Loader(object):

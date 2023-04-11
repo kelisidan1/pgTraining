@@ -1,4 +1,4 @@
-from 感知器.perceptron import Perceptron
+from perceptron.perceptron import Perceptron
 '''
     这个项目是 有监督学习
     通过公司当中几个人的收入

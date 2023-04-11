@@ -1,7 +1,7 @@
 # Network 神经网络对象，提供API接口。它由若干层对象组成以及连接对象组成。
-from day03.Connection import Connection
-from day03.Connections import Connections
-from day03.Layer import Layer
+from Neural_networks_and_BP.Connection import Connection
+from Neural_networks_and_BP.Connections import Connections
+from Neural_networks_and_BP.Layer import Layer
 
 
 class Network(object):
