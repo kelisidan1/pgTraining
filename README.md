@@ -9,6 +9,7 @@
 <br>
 
 # 我爱学习
-吐槽：day03 —— 神经网络和反向传播的内容真的一天就能学完嘛？
+我是熊猫<br>
+
 
 ![image-20230409201348766](https://raw.githubusercontent.com/kelisidan1/blogImg/main/img/image-20230409201348766.png)
