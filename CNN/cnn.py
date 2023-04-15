@@ -2,6 +2,13 @@ import numpy as np
 
 #工具函数
 def element_wise_op(array, op):
+    '''
+    对array当中的每一个参数都使用activator
+    作用：对vector 或者 matrix都可以用这个东西
+    :param array:
+    :param op:
+    :return:
+    '''
     for i in np.nditer(array,op_flags=['readwrite']):
         i[...] = op(i)
 
