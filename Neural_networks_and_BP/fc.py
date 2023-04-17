@@ -1,9 +1,4 @@
 import numpy as np
-'''
-    实现不了啊。。。。。。。。。
-'''
-
-
 
 #全连接层实现类
 class FullConnectedLayer(object):
