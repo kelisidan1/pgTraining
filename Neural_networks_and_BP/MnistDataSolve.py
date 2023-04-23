@@ -4,7 +4,122 @@ import struct
 from bp import *
 from datetime import datetime
 # 数据加载器基类
-from Neural_networks_and_BP.fc import Network
+import numpy as np
+
+#全连接层实现类
+class FullConnectedLayer(object):
+    def __init__(self,input_size,output_size,activator):
+        '''
+        :param input_size: 本层输入向量的维度
+        :param output_size: 本层输出向量的维度
+        :param activator: 激活函数
+        '''
+        self.input_size = input_size
+        self.output_size = output_size
+        self.activator = activator
+
+        # 权重数组W 以后要更新的就是这玩意
+        self.W = np.random.uniform(-0.1,0.1,(output_size, input_size)) # random.uniform (x, y) 方法将随机生成一个实数，它在 [x,y] 范围内
+        #偏置值
+        self.b = np.zeros((output_size,1))
+        #输出向量
+        self.output = np.zeros((output_size,1))
+
+    def forward(self,input_array):
+        '''
+        向前计算
+        :param input_array: 输入向量
+        :return:
+        '''
+        self.input = input_array
+        self.output = self.activator.forward(self,np.dot(self.W, input_array) + self.b)
+
+    def backward(self,delta_array):
+        '''
+        反向计算w和b的梯度
+        :param delta_array:从上一次传过来的误差项
+        :return:
+        '''
+        self.delta = self.activator.backward(self,self.input) *np.dot(self.W.T,delta_array) # W.T是矩阵转置
+        self.W_grad = np.dot(delta_array,self.input.T)
+        self.b_grad = delta_array
+
+    def update(self,learning_rate):
+        '''
+        用梯度下降法更新权重
+        :param learning_rate:
+        :return:
+        '''
+        self.W += learning_rate * self.W_grad
+        self.b += learning_rate * self.b_grad
+
+class SigmoidActivator(object):
+    def forward(self,weighted_input):
+        return 1.0/ (1.0 + np.exp(-weighted_input))
+    def backward(self,output):
+        return output * (1 - output) # sigmoid函数求导，从而得到梯度，用来做反向传播
+
+class Network(object):
+    def __init__(self,layers):
+        # 注意layers 和 self.layers的区别
+        # 这里就是将layers 装入到 self.layers当中，并进行全连接的操作
+        self.layers = []
+        for i in range(len(layers) -1):
+            self.layers.append(
+                FullConnectedLayer(
+                    layers[i],layers[i+1],
+                    SigmoidActivator
+                )
+            )
+
+    def predict(self,sample):
+        '''
+        使用神经网络实现预测 ： 正向输出
+        :param sample: 输入样本
+        :return:
+        '''
+        output = sample
+        # 每次都向前传递一层的参数，传递的方式就是 矩阵乘向量
+        for layer in self.layers:
+            layer.forward(output)
+            output = layer.output
+        return output
+
+    def train(self,labels,data_set,rate,epoch):
+        '''
+        训练函数
+        :param labels: 样本标签
+        :param data_set: 数据集
+        :param rate: 学习速率
+        :param epoch: 训练轮数
+        :return:
+        '''
+        for i in range(epoch):
+            for d in range(len(data_set)):
+                self.train_one_sample(
+                    labels[d],
+                    data_set[d],
+                    rate
+                )
+
+    def train_one_sample(self,label,sample,rate):
+        self.predict(sample) # 前向计算得到输出
+        self.calc_gradient(label) # 计算梯度
+        self.update_weight(rate) # 更新权重
+
+    def calc_gradient(self,label):
+        label = np.atleast_2d(label).T # 将纯向量转成 矩阵化向量，方便计算 即 [1,2,3,4] -> [[1],[2],[3],[4]]
+        # self.layers[-1].output 是最后一层的输出向量
+        delta = self.layers[-1].activator.backward(SigmoidActivator,self.layers[-1].output)*(label - self.layers[-1].output)
+        # 式8计算每层误差
+        for layer in self.layers[::-1]:
+            layer.backward(delta)
+            delta = layer.delta
+        return delta
+
+    def update_weight(self,rate):
+        for layer in self.layers:
+            layer.update(rate)
 
 
 class Loader(object):
@@ -40,12 +155,12 @@ class ImageLoader(Loader):
         for i in range(28):
             picture.append([])
             for j in range(28):
-                picture[i].append(
-                    self.to_int(bytes([content[start + i * 28 + j]])))
+                picture[i].append(self.to_int(bytes([content[start + i * 28 + j]])))
         return picture
     def get_one_sample(self, picture):
         '''
         内部函数，将图像转化为样本的输入向量
+        二维的图像转换成一维的向量
         '''
         sample = []
         for i in range(28):
@@ -63,7 +178,7 @@ class ImageLoader(Loader):
                 self.get_one_sample(
                     self.get_picture(content, index)))
         return data_set
-# 标签数据加载器
+
 class LabelLoader(Loader):
     def load(self):
         '''
@@ -90,7 +205,7 @@ def get_training_data_set():
     '''
     获得训练数据集
     '''
-    image_loader = ImageLoader('./MNIST_data/train-images.idx3-ubyte', 60000)
+    image_loader = ImageLoader('./MNIST_data/train-images.idx3-ubyte', 60000) #加载训练集
     label_loader = LabelLoader('./MNIST_data/train-labels.idx1-ubyte', 60000)
     return image_loader.load(), label_loader.load()
 def get_test_data_set():
@@ -101,7 +216,9 @@ def get_test_data_set():
     label_loader = LabelLoader('./MNIST_data/t10k-labels.idx1-ubyte', 10000)
     return image_loader.load(), label_loader.load()
 
+# 网络的输出是一个10维向量，这个向量第个(从0开始编号)元素的值最大，那么就是网络的识别结果。
 def get_result(vec):
+    # 我得到的其实是可能性最大的那个东西
     max_value_index = 0
     max_value = 0
     for i in range(len(vec)):
@@ -114,21 +231,21 @@ def evaluate(network, test_data_set, test_labels):
     error = 0
     total = len(test_data_set)
     for i in range(total):
-        label = get_result(test_labels[i])
-        predict = get_result(network.predict(test_data_set[i]))
+        label = get_result(test_labels[i]) # label集合
+        predict = get_result(network.predict(test_data_set[i])) # 根据模型预测出来的
         if label != predict:
             error += 1
-    return float(error) / float(total)
+    return float(error) / float(total) # 计算错误率
 
 def train_and_evaluate():
-    last_error_ratio = 1.0
-    epoch = 0
+    last_error_ratio = 1.0 # 错误率
+    epoch = 0 # 一个epoch , 表示： 所有的数据送入网络中， 完成了一次前向计算 + 反向传播的过程。
     train_data_set, train_labels = get_training_data_set()
     test_data_set, test_labels = get_test_data_set()
-    network = Network([784, 300, 10])
+    network = Network([784, 300, 10]) # 输入层 784个节点 hidden_layer 300个节点 output_layer 10个节点
     while True:
         epoch += 1
-        network.train(train_labels, train_data_set, 0.3, 1)
+        network.train(train_labels, train_data_set, 0.3, 1) # 学习速率为0.1
         print ('%s epoch %d finished' % (datetime.now(), epoch))
         if epoch % 10 == 0:
             error_ratio = evaluate(network, test_data_set, test_labels)
